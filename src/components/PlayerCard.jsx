@@ -9,7 +9,7 @@ export default function PlayerCard({ player, team, onToggleLockPosition, onToggl
       }`}
       style={{ backgroundColor: '#1A1A2E' }}
     >
-      {/* 헤더: 포지션 + FinalScore */}
+      {/* 헤더: 포지션 + 총점 */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           {isLocked && <span className="text-[#C8AA6E]">🔒</span>}
@@ -25,93 +25,45 @@ export default function PlayerCard({ player, team, onToggleLockPosition, onToggl
         </span>
       </div>
 
-      {/* 소환사 정보 */}
-      <div className="flex items-center justify-between mb-4">
+      {/* 닉네임 + 티어 */}
+      <div className="flex items-center justify-between mb-3">
         <span className="font-semibold text-lg text-[#F0F0F0]">{player.name}</span>
         <span className="text-sm text-[#C8AA6E]">{player.tiers.current}</span>
       </div>
 
       <div className="border-t border-[#2A2A4A] my-3" />
 
-      {/* 점수 구성 */}
-      <div className="mb-4">
-        <p className="text-xs text-[#8888AA] mb-2">📊 점수 구성</p>
-        <div className="grid grid-cols-2 gap-1 text-sm font-mono">
-          <span className="text-[#8888AA]">TierScore</span>
-          <span className="text-right text-[#F0F0F0]">{player.tierScore}</span>
-          <span className="text-[#8888AA]">MainWinRate</span>
-          <span className="text-right text-[#F0F0F0]">{player.mainWinRate}%</span>
-          <span className="text-[#8888AA]">RecentWinRate</span>
-          <span className="text-right text-[#F0F0F0]">{player.recentWinRate}%</span>
-          <span className="text-[#8888AA]">RawScore</span>
-          <span className="text-right text-[#4CC9FF]">{player.rawScore}</span>
+      {/* 추천 포지션 */}
+      <div className="mb-3">
+        <p className="text-xs text-[#8888AA] mb-1.5">🗺 추천 포지션</p>
+        <div className="flex items-center gap-3 text-xs font-mono">
+          <span className="flex items-center gap-1">
+            <span className="text-[#FFD600]">★</span>
+            <span className="text-[#F0F0F0] font-semibold">{player.positionData.main.name}</span>
+          </span>
+          {player.positionData.sub && (
+            <span className="flex items-center gap-1">
+              <span className="text-[#8888AA]">☆</span>
+              <span className="text-[#8888AA]">{player.positionData.sub.name}</span>
+            </span>
+          )}
         </div>
       </div>
 
-      {/* 챔피언 고정 */}
+      {/* 추천 챔피언 */}
       {player.champion && (
-        <div className="mb-4">
-          <p className="text-xs text-[#8888AA] mb-2">🎮 챔피언</p>
-          <div className="flex items-center gap-2 mb-1">
+        <div className="mb-3">
+          <p className="text-xs text-[#8888AA] mb-1.5">🎮 추천 챔피언</p>
+          <div className="flex items-center gap-2">
             <span className="text-lg">{player.champion.icon}</span>
-            <span className="font-semibold text-[#F0F0F0]">{player.champion.name}</span>
+            <span className="font-semibold text-sm text-[#F0F0F0]">{player.champion.name}</span>
             {player.lockedChampion && <span className="text-[#C8AA6E] text-xs">🔒</span>}
-          </div>
-          <div className="text-xs text-[#8888AA] font-mono space-y-0.5">
-            <p>숙련도 M{player.champion.mastery} | 승률 {player.champion.winRate}% | {player.champion.games}게임</p>
-            <p>ChampionScore: <span className="text-[#00C853]">+{player.championScore}</span></p>
-            <p>Raw + Champ: <span className="text-[#4CC9FF]">{player.rawScoreWithChamp}</span></p>
           </div>
         </div>
       )}
 
-      {/* 포지션 정보 */}
-      <div className="mb-4">
-        <p className="text-xs text-[#8888AA] mb-2">🗺 포지션</p>
-        <div className="space-y-1 text-xs font-mono">
-          <div className="flex items-center gap-2">
-            <span className="text-[#FFD600]">★</span>
-            <span className="text-[#F0F0F0] w-8">{player.positionData.main.name}</span>
-            <span className="text-[#8888AA]">({player.positionData.main.weight})</span>
-            <span className="text-[#8888AA] ml-auto">
-              {player.positionData.main.games}회 | 승률 {Math.round(player.positionData.main.wins / player.positionData.main.games * 100)}%
-            </span>
-          </div>
-          {player.positionData.sub && (
-            <div className="flex items-center gap-2">
-              <span className="text-[#8888AA]">☆</span>
-              <span className="text-[#F0F0F0] w-8">{player.positionData.sub.name}</span>
-              <span className="text-[#8888AA]">({player.positionData.sub.weight})</span>
-              <span className="text-[#8888AA] ml-auto">
-                {player.positionData.sub.games}회 | 승률 {Math.round(player.positionData.sub.wins / player.positionData.sub.games * 100)}%
-              </span>
-            </div>
-          )}
-          {player.positionData.others.map((pos) => (
-            <div key={pos.name} className="flex items-center gap-2">
-              <span className="text-[#8888AA]">·</span>
-              <span className="text-[#8888AA] w-8">{pos.name}</span>
-              <span className="text-[#8888AA]">({pos.weight})</span>
-              <span className="text-[#8888AA] ml-auto">
-                {pos.games}회 | 승률 {Math.round(pos.wins / pos.games * 100)}%
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* 최종 계산 */}
-      <div className="text-xs font-mono text-[#8888AA] mb-3 bg-[#0A0A0F] rounded px-3 py-2">
-        최종: {player.rawScoreWithChamp} × {
-          player.assignedPosition === player.positionData.main.name
-            ? player.positionData.main.weight
-            : player.positionData.sub?.name === player.assignedPosition
-            ? player.positionData.sub.weight
-            : 0.6
-        } = <span className="text-[#4CC9FF] font-bold">{player.finalScore}</span>
-      </div>
-
       {/* 고정 체크박스 */}
+      <div className="border-t border-[#2A2A4A] my-3" />
       <div className="flex gap-4 text-xs">
         <label className="flex items-center gap-1.5 cursor-pointer text-[#8888AA] hover:text-[#F0F0F0] transition-colors">
           <input

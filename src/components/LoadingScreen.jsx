@@ -11,7 +11,10 @@ export default function LoadingScreen({ playerNames, onComplete }) {
 
   useEffect(() => {
     if (current >= playerNames.length) {
-      const scoredPlayers = mockPlayers.map((p) => calcPlayerScores(p));
+      const scoredPlayers = mockPlayers.map((p, i) => ({
+        ...calcPlayerScores(p),
+        name: playerNames[i] || p.name,
+      }));
       const teams = assignTeams(scoredPlayers);
       setTimeout(() => onComplete(teams), 500);
       return;

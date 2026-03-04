@@ -35,7 +35,7 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0F] text-[#F0F0F0] font-sans">
+    <div className="min-h-screen text-[#F0E6D2] font-sans">
       {screen === SCREENS.INPUT && (
         <InputScreen onStart={handleStartBalancing} />
       )}

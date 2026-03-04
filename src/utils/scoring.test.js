@@ -31,17 +31,30 @@ describe('calcChampionScore', () => {
 });
 
 describe('calcPositionData', () => {
-  it('포지션을 주/부/기타로 분류', () => {
+  it('포지션을 주/부/기타로 분류 (고티어 — 페널티 작음)', () => {
     const positions = [
       { name: 'MID', games: 150, wins: 102 },
       { name: 'TOP', games: 30, wins: 18 },
       { name: 'JG', games: 10, wins: 5 },
     ];
-    const result = calcPositionData(positions);
+    const result = calcPositionData(positions, 85); // 다이아1 tierScore
     expect(result.main.name).toBe('MID');
     expect(result.sub.name).toBe('TOP');
     expect(result.others[0].name).toBe('JG');
     expect(result.main.weight).toBe(1.0);
-    expect(result.sub.weight).toBe(0.8);
+    expect(result.sub.weight).toBe(0.95);
+    expect(result.others[0].weight).toBe(0.90);
+  });
+
+  it('포지션을 주/부/기타로 분류 (저티어 — 페널티 큼)', () => {
+    const positions = [
+      { name: 'MID', games: 150, wins: 102 },
+      { name: 'TOP', games: 30, wins: 18 },
+      { name: 'JG', games: 10, wins: 5 },
+    ];
+    const result = calcPositionData(positions, 20); // 브론즈 tierScore
+    expect(result.main.weight).toBe(1.0);
+    expect(result.sub.weight).toBe(0.65);
+    expect(result.others[0].weight).toBe(0.40);
   });
 });

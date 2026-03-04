@@ -1,10 +1,17 @@
 export const POSITIONS = ['TOP', 'JG', 'MID', 'ADC', 'SUP'];
 
-export const POSITION_WEIGHT = {
-  main: 1.0,
-  sub: 0.8,
-  other: 0.6,
-};
+// 티어 구간별 포지션 가중치 (고티어일수록 비주류 페널티 작음)
+export const POSITION_WEIGHT_TABLE = [
+  { minScore: 76, main: 1.0, sub: 0.95, other: 0.90 }, // 다이아+
+  { minScore: 52, main: 1.0, sub: 0.85, other: 0.70 }, // 에메~플래
+  { minScore: 28, main: 1.0, sub: 0.75, other: 0.55 }, // 골드~실버
+  { minScore: 0,  main: 1.0, sub: 0.65, other: 0.40 }, // 브론즈 이하
+];
+
+export function getPositionWeight(tierScore) {
+  const row = POSITION_WEIGHT_TABLE.find((r) => tierScore >= r.minScore) || POSITION_WEIGHT_TABLE.at(-1);
+  return { main: row.main, sub: row.sub, other: row.other };
+}
 
 export const TIER_SCORE = {
   'Challenger': 100,

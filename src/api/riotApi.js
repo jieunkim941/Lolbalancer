@@ -21,3 +21,19 @@ export async function fetchPlayerData(nameWithTag) {
 
   return res.json();
 }
+
+export async function searchPlayers(gameName) {
+  try {
+    const url = IS_DEV
+      ? `http://localhost:3001/api/search/${encodeURIComponent(gameName)}`
+      : `/api/search?gameName=${encodeURIComponent(gameName)}`;
+
+    const res = await fetch(url);
+    if (!res.ok) return [];
+
+    const data = await res.json();
+    return data.results || [];
+  } catch {
+    return [];
+  }
+}

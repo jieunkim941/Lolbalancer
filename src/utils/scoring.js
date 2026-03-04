@@ -1,4 +1,4 @@
-import { TIER_SCORE, CHAMPION_WEIGHT, MASTERY_SCORE, POSITION_WEIGHT } from '../data/constants';
+import { TIER_SCORE, CHAMPION_WEIGHT, MASTERY_SCORE, getPositionWeight } from '../data/constants';
 
 export function calcTierScore(tiers) {
   const current = TIER_SCORE[tiers.current] ?? 30;
@@ -19,17 +19,19 @@ export function calcChampionScore(champion) {
   return (masteryScore + winRateScore + gamesScore) * CHAMPION_WEIGHT;
 }
 
-export function calcPositionData(positions) {
+export function calcPositionData(positions, tierScore) {
   const sorted = [...positions].sort((a, b) => {
     const scoreA = a.games + (a.wins / a.games) * 100;
     const scoreB = b.games + (b.wins / b.games) * 100;
     return scoreB - scoreA;
   });
 
+  const pw = getPositionWeight(tierScore);
+
   return {
-    main: { ...sorted[0], weight: POSITION_WEIGHT.main, role: 'main' },
-    sub: sorted[1] ? { ...sorted[1], weight: POSITION_WEIGHT.sub, role: 'sub' } : null,
-    others: sorted.slice(2).map(p => ({ ...p, weight: POSITION_WEIGHT.other, role: 'other' })),
+    main: { ...sorted[0], weight: pw.main, role: 'main' },
+    sub: sorted[1] ? { ...sorted[1], weight: pw.sub, role: 'sub' } : null,
+    others: sorted.slice(2).map(p => ({ ...p, weight: pw.other, role: 'other' })),
   };
 }
 
@@ -39,7 +41,7 @@ export function calcFinalScore(rawScore, championScore, positionWeight) {
 
 export function calcPlayerScores(player) {
   const tierScore = calcTierScore(player.tiers);
-  const positionData = calcPositionData(player.positions);
+  const positionData = calcPositionData(player.positions, tierScore);
   const mainWinRate = (positionData.main.wins / positionData.main.games) * 100;
   const rawScore = calcRawScore(tierScore, mainWinRate, player.recentWinRate);
   const championScore = calcChampionScore(player.champion);

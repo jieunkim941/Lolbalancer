@@ -48,21 +48,30 @@ export function apiDataToPlayer(apiData, index, inputName) {
 
   // 챔피언 데이터
   const topChampId = apiData.topChampionId;
+  const topChampKey = apiData.topChampionKey;
   const champName = CHAMPION_NAMES[topChampId] || `챔피언 ${topChampId}`;
+  const ddragonVersion = apiData.ddragonVersion || '16.5.1';
+
+  const seasonTiers = apiData.seasonTiers;
 
   return {
     id: index + 1,
     name: inputName,
     tag: apiData.tagLine || 'KR1',
+    ddragonVersion,
     tiers: {
-      current: tier,
-      season1: tier,   // API에서 과거 시즌 데이터는 직접 제공하지 않으므로 현재 티어로 대체
-      season2: tier,
+      current: seasonTiers?.current?.tier || tier,
+      season1: seasonTiers?.season1?.tier || tier,
+      season2: seasonTiers?.season2?.tier || tier,
+      currentLabel: seasonTiers?.current?.season || 'Current',
+      season1Label: seasonTiers?.season1?.season || 'Season 1',
+      season2Label: seasonTiers?.season2?.season || 'Season 2',
+      rankType: seasonTiers?.current?.type || (apiData.rankType === 'flex' ? 'flex' : 'solo'),
     },
     positions,
     champion: {
       name: champName,
-      icon: '🎮',
+      championKey: topChampKey,
       mastery: apiData.topChampionMastery || 1,
       winRate: apiData.recentWinRate || 50,
       games: Math.round((apiData.topChampionPoints || 0) / 1000),

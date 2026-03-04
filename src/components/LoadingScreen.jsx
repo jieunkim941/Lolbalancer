@@ -58,8 +58,8 @@ export default function LoadingScreen({ playerNames, onComplete }) {
 
     async function analyzeAll() {
       const results = new Array(playerNames.length);
-      const BATCH = 2; // 2명씩 동시 호출 (Riot API 속도 제한 고려)
-      const BATCH_DELAY = 1500; // 배치 간 1.5초 대기
+      const BATCH = 2; // 2명씩 호출
+      const BATCH_DELAY = 1000; // 배치 간 1초 대기
 
       for (let start = 0; start < playerNames.length; start += BATCH) {
         if (start > 0) {

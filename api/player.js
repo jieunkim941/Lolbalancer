@@ -19,29 +19,41 @@ async function getChampionMap() {
   return championIdToKey;
 }
 
-function createRiotClient(base) {
+// Riot API 클라이언트 (싱글톤, 타임아웃 + 429/503/504 자동 재시도)
+const riotClients = {};
+
+function getRiotClient(base) {
+  if (riotClients[base]) return riotClients[base];
+
   const client = axios.create({
     baseURL: base,
     headers: { 'X-Riot-Token': process.env.RIOT_API_KEY },
+    timeout: 10000,
   });
 
   client.interceptors.response.use(null, async (error) => {
     const config = error.config;
     if (!config) return Promise.reject(error);
     config._retryCount = config._retryCount || 0;
-    if (error.response?.status === 429 && config._retryCount < 3) {
+    const status = error.response?.status;
+
+    if ((status === 429 || status === 503 || status === 504) && config._retryCount < 3) {
       config._retryCount++;
-      const retryAfter = parseInt(error.response.headers['retry-after'] || '2', 10);
-      await new Promise((r) => setTimeout(r, retryAfter * 1000 + 200));
+      const retryAfter = status === 429
+        ? parseInt(error.response.headers['retry-after'] || '2', 10) * 1000
+        : 1000 * config._retryCount;
+      const delay = retryAfter + 200;
+      await new Promise((r) => setTimeout(r, delay));
       return client(config);
     }
     return Promise.reject(error);
   });
 
+  riotClients[base] = client;
   return client;
 }
 
-const riot = (base) => createRiotClient(base);
+const riot = (base) => getRiotClient(base);
 
 const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',')
@@ -97,7 +109,7 @@ async function fetchSeasonTiers(gameName, tagLine) {
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept-Language': 'ko-KR,ko;q=0.9',
       },
-      timeout: 8000,
+      timeout: 4000,
     });
 
     const $ = cheerio.load(html);
@@ -151,25 +163,30 @@ export default async function handler(req, res) {
       `/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}`
     );
 
-    // 2) puuid 확보 후 독립적인 호출을 병렬 실행
+    // 2) puuid 확보 후 병렬 실행 — 모든 호출에 폴백 (계정 조회만 필수)
+    const safe = (promise, fallback) => promise.catch(() => fallback);
+
     const [summoner, leagues, matchIds, masteries, seasonTiers] = await Promise.all([
-      riot(KR_BASE).get(`/lol/summoner/v4/summoners/by-puuid/${account.puuid}`).then((r) => r.data),
-      riot(KR_BASE).get(`/lol/league/v4/entries/by-puuid/${account.puuid}`).then((r) => r.data),
-      riot(ASIA_BASE).get(`/lol/match/v5/matches/by-puuid/${account.puuid}/ids`, { params: { queue: 420, count: 20 } }).then((r) => r.data),
-      riot(KR_BASE).get(`/lol/champion-mastery/v4/champion-masteries/by-puuid/${account.puuid}/top`, { params: { count: 5 } }).then((r) => r.data),
+      safe(riot(KR_BASE).get(`/lol/summoner/v4/summoners/by-puuid/${account.puuid}`).then((r) => r.data), null),
+      safe(riot(KR_BASE).get(`/lol/league/v4/entries/by-puuid/${account.puuid}`).then((r) => r.data), []),
+      safe(riot(ASIA_BASE).get(`/lol/match/v5/matches/by-puuid/${account.puuid}/ids`, { params: { queue: 420, count: 20 } }).then((r) => r.data), []),
+      safe(riot(KR_BASE).get(`/lol/champion-mastery/v4/champion-masteries/by-puuid/${account.puuid}/top`, { params: { count: 5 } }).then((r) => r.data), []),
       fetchSeasonTiers(gameName, tagLine),
     ]);
 
     const soloRank = leagues.find((l) => l.queueType === 'RANKED_SOLO_5x5');
     const flexRank = leagues.find((l) => l.queueType === 'RANKED_FLEX_SR');
 
-    // 3) 매치 상세 병렬 호출 (최대 5게임 — API 속도 제한 고려)
-    const matchLimit = Math.min(matchIds.length, 5);
-    const matchDetails = await Promise.all(
-      matchIds.slice(0, matchLimit).map((id) =>
-        riot(ASIA_BASE).get(`/lol/match/v5/matches/${id}`).then((r) => r.data)
-      )
-    );
+    // 3) 매치 상세 순차 호출 (최대 3게임 — 실패한 매치는 스킵)
+    const matchDetails = [];
+    for (let i = 0; i < Math.min(matchIds.length, 3); i++) {
+      try {
+        const { data } = await riot(ASIA_BASE).get(`/lol/match/v5/matches/${matchIds[i]}`);
+        matchDetails.push(data);
+      } catch (e) {
+        // skip
+      }
+    }
 
     // === 데이터 가공 ===
     const positionStats = {};
@@ -205,8 +222,8 @@ export default async function handler(req, res) {
       gameName: account.gameName,
       tagLine: account.tagLine,
       puuid: account.puuid,
-      profileIconId: summoner.profileIconId,
-      summonerLevel: summoner.summonerLevel,
+      profileIconId: summoner?.profileIconId || 0,
+      summonerLevel: summoner?.summonerLevel || 0,
       tier: tierString,
       rankType,
       lp: rankSource?.leaguePoints || 0,

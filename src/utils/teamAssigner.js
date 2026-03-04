@@ -1,6 +1,7 @@
 import { POSITIONS } from '../data/constants';
 
-const MAX_DIFF = 20; // 허용 점수 차이
+const MAX_DIFF = 20; // 허용 총점 차이
+const MAX_LANE_DIFF = 15; // 허용 라인별 점수 차이
 
 export function assignTeams(players) {
   // 1. 고정된 플레이어 분리
@@ -49,8 +50,21 @@ export function assignTeams(players) {
     const scoreB = teamB.reduce((s, p) => s + p.finalScore, 0);
     const diff = Math.abs(scoreA - scoreB);
 
-    if (diff <= MAX_DIFF) {
-      candidates.push({ teamA, teamB, diff });
+    // 라인별 점수 차이 체크
+    let laneFail = false;
+    let maxLaneDiff = 0;
+    for (const pos of POSITIONS) {
+      const pA = teamA.find((p) => p.assignedPosition === pos);
+      const pB = teamB.find((p) => p.assignedPosition === pos);
+      if (pA && pB) {
+        const laneDiff = Math.abs(pA.finalScore - pB.finalScore);
+        if (laneDiff > maxLaneDiff) maxLaneDiff = laneDiff;
+        if (laneDiff > MAX_LANE_DIFF) { laneFail = true; break; }
+      }
+    }
+
+    if (diff <= MAX_DIFF && !laneFail) {
+      candidates.push({ teamA, teamB, diff, maxLaneDiff });
     }
   });
 
@@ -60,8 +74,8 @@ export function assignTeams(players) {
     return greedyAssign(players);
   }
 
-  // diff가 작을수록 높은 가중치 (weight = MAX_DIFF - diff + 1)
-  const weights = candidates.map((c) => MAX_DIFF - c.diff + 1);
+  // 총점 차이 + 라인 차이 둘 다 작을수록 높은 가중치
+  const weights = candidates.map((c) => (MAX_DIFF - c.diff + 1) + (MAX_LANE_DIFF - c.maxLaneDiff + 1));
   const totalWeight = weights.reduce((a, b) => a + b, 0);
   let rand = Math.random() * totalWeight;
 

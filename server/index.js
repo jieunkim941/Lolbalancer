@@ -10,7 +10,7 @@ const app = express();
 // CORS: 허용 도메인 제한
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',')
-  : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:3000'];
+  : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:5176', 'http://localhost:5177', 'http://localhost:3000'];
 
 app.use(cors({
   origin(origin, callback) {
@@ -57,24 +57,33 @@ async function loadChampionData() {
 }
 loadChampionData();
 
-function createRiotClient(base) {
+// Riot API 클라이언트 (싱글톤, 타임아웃 + 429/503/504 자동 재시도)
+const riotClients = {};
+
+function getRiotClient(base) {
+  if (riotClients[base]) return riotClients[base];
+
   const client = axios.create({
     baseURL: base,
     headers: { 'X-Riot-Token': API_KEY },
+    timeout: 10000, // 10초 타임아웃
   });
 
-  // 429 자동 재시도 (최대 3회, Retry-After 헤더 존중)
   client.interceptors.response.use(null, async (error) => {
     const config = error.config;
     if (!config) return Promise.reject(error);
 
     config._retryCount = config._retryCount || 0;
+    const status = error.response?.status;
 
-    if (error.response?.status === 429 && config._retryCount < 3) {
+    // 429(Rate Limit), 503(Service Unavailable), 504(Gateway Timeout) 재시도
+    if ((status === 429 || status === 503 || status === 504) && config._retryCount < 3) {
       config._retryCount++;
-      const retryAfter = parseInt(error.response.headers['retry-after'] || '2', 10);
-      const delay = retryAfter * 1000 + 200; // Retry-After + 여유 200ms
-      console.log(`Rate limited, retry ${config._retryCount}/3 after ${delay}ms`);
+      const retryAfter = status === 429
+        ? parseInt(error.response.headers['retry-after'] || '2', 10) * 1000
+        : 1000 * config._retryCount; // 503/504는 1s, 2s, 3s 증가
+      const delay = retryAfter + 200;
+      console.log(`[${status}] retry ${config._retryCount}/3 after ${delay}ms — ${config.url}`);
       await new Promise((r) => setTimeout(r, delay));
       return client(config);
     }
@@ -82,10 +91,11 @@ function createRiotClient(base) {
     return Promise.reject(error);
   });
 
+  riotClients[base] = client;
   return client;
 }
 
-const riot = (base) => createRiotClient(base);
+const riot = (base) => getRiotClient(base);
 
 // 인메모리 캐시 (TTL 5분)
 const cache = new Map();
@@ -257,7 +267,7 @@ async function fetchSeasonTiers(gameName, tagLine) {
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept-Language': 'ko-KR,ko;q=0.9',
       },
-      timeout: 8000,
+      timeout: 4000, // op.gg는 보조 데이터 — 빨리 포기
     });
 
     const $ = cheerio.load(html);
@@ -322,25 +332,33 @@ app.get('/api/player/:gameName/:tagLine', async (req, res) => {
       `/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}`
     );
 
-    // 2) puuid 확보 후 독립적인 호출을 병렬 실행
+    // 2) puuid 확보 후 병렬 실행 — 모든 호출에 폴백 (계정 조회만 필수)
+    const safe = (promise, fallback) => promise.catch((e) => {
+      console.warn('API fallback:', e.response?.status, e.message);
+      return fallback;
+    });
+
     const [summoner, leagues, matchIds, masteries, seasonTiers] = await Promise.all([
-      riot(KR_BASE).get(`/lol/summoner/v4/summoners/by-puuid/${account.puuid}`).then((r) => r.data),
-      riot(KR_BASE).get(`/lol/league/v4/entries/by-puuid/${account.puuid}`).then((r) => r.data),
-      riot(ASIA_BASE).get(`/lol/match/v5/matches/by-puuid/${account.puuid}/ids`, { params: { queue: 420, count: 20 } }).then((r) => r.data),
-      riot(KR_BASE).get(`/lol/champion-mastery/v4/champion-masteries/by-puuid/${account.puuid}/top`, { params: { count: 5 } }).then((r) => r.data),
+      safe(riot(KR_BASE).get(`/lol/summoner/v4/summoners/by-puuid/${account.puuid}`).then((r) => r.data), null),
+      safe(riot(KR_BASE).get(`/lol/league/v4/entries/by-puuid/${account.puuid}`).then((r) => r.data), []),
+      safe(riot(ASIA_BASE).get(`/lol/match/v5/matches/by-puuid/${account.puuid}/ids`, { params: { queue: 420, count: 20 } }).then((r) => r.data), []),
+      safe(riot(KR_BASE).get(`/lol/champion-mastery/v4/champion-masteries/by-puuid/${account.puuid}/top`, { params: { count: 5 } }).then((r) => r.data), []),
       fetchSeasonTiers(gameName, tagLine),
     ]);
 
     const soloRank = leagues.find((l) => l.queueType === 'RANKED_SOLO_5x5');
     const flexRank = leagues.find((l) => l.queueType === 'RANKED_FLEX_SR');
 
-    // 3) 매치 상세 병렬 호출 (최대 5게임 — API 속도 제한 고려)
-    const matchLimit = Math.min(matchIds.length, 5);
-    const matchDetails = await Promise.all(
-      matchIds.slice(0, matchLimit).map((id) =>
-        riot(ASIA_BASE).get(`/lol/match/v5/matches/${id}`).then((r) => r.data)
-      )
-    );
+    // 3) 매치 상세 순차 호출 (최대 3게임 — 실패한 매치는 스킵)
+    const matchDetails = [];
+    for (let i = 0; i < Math.min(matchIds.length, 3); i++) {
+      try {
+        const { data } = await riot(ASIA_BASE).get(`/lol/match/v5/matches/${matchIds[i]}`);
+        matchDetails.push(data);
+      } catch (e) {
+        console.warn(`Match ${matchIds[i]} skipped:`, e.message);
+      }
+    }
 
     // === 데이터 가공 ===
 
@@ -380,8 +398,8 @@ app.get('/api/player/:gameName/:tagLine', async (req, res) => {
       gameName: account.gameName,
       tagLine: account.tagLine,
       puuid: account.puuid,
-      profileIconId: summoner.profileIconId,
-      summonerLevel: summoner.summonerLevel,
+      profileIconId: summoner?.profileIconId || 0,
+      summonerLevel: summoner?.summonerLevel || 0,
       tier: tierString,
       rankType,
       lp: rankSource?.leaguePoints || 0,

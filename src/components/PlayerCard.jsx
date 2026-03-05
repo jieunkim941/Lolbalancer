@@ -1,5 +1,28 @@
 import { useState } from 'react';
 
+const POSITION_ICON_BASE = 'https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-champ-select/global/default/svg';
+const POSITION_ICON_MAP = {
+  TOP: 'position-top.svg',
+  JG: 'position-jungle.svg',
+  MID: 'position-middle.svg',
+  ADC: 'position-bottom.svg',
+  SUP: 'position-utility.svg',
+};
+
+function PositionIcon({ position, size = 16 }) {
+  const file = POSITION_ICON_MAP[position];
+  if (!file) return null;
+  return (
+    <img
+      src={`${POSITION_ICON_BASE}/${file}`}
+      alt={position}
+      width={size}
+      height={size}
+      className="brightness-0 invert opacity-80"
+    />
+  );
+}
+
 const POSITION_COLORS = {
   TOP: '#FF6B6B',
   JG: '#4ECDC4',
@@ -157,7 +180,7 @@ export default function PlayerCard({ player, team, onToggleLockTeam, onToggleLoc
           {/* 최근 3시즌 티어 */}
           <div className="mt-3 mb-4">
             <p className="text-xs text-[#A09B8C] mb-2 flex items-center gap-1">
-              <span>🏆</span> 최근 3시즌 티어
+              최근 3시즌 티어
               {player.tiers.rankType === 'flex' && (
                 <span className="ml-1 text-[9px] bg-[#C8AA6E20] text-[#C8AA6E] px-1.5 py-0.5 rounded">자유랭크</span>
               )}
@@ -187,12 +210,10 @@ export default function PlayerCard({ player, team, onToggleLockTeam, onToggleLoc
           {/* 추천 포지션 */}
           <div className="mb-4">
             <p className="text-xs text-[#A09B8C] mb-1.5 flex items-center gap-1">
-              <span>🎯</span> 추천 포지션
+              추천 포지션
             </p>
             <div className="flex items-center gap-2 text-sm">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="#C8AA6E" stroke="none">
-                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-              </svg>
+              <PositionIcon position={player.positionData.main.name} />
               <span className="font-semibold text-[#F0E6D2]">{player.positionData.main.name}</span>
               {player.positionData.sub && (
                 <span className="text-[#A09B8C] text-xs">(부: {player.positionData.sub.name})</span>
@@ -204,7 +225,7 @@ export default function PlayerCard({ player, team, onToggleLockTeam, onToggleLoc
           {player.champion && (
             <div className="mb-4">
               <p className="text-xs text-[#A09B8C] mb-1.5 flex items-center gap-1">
-                <span>🎮</span> 추천 챔피언
+                추천 챔피언
               </p>
               <div className="flex items-center gap-3 bg-[#0A0A0F] rounded p-2.5 border border-[rgba(200,170,110,0.1)]">
                 <div className="w-10 h-10 rounded bg-[#1E2328] flex items-center justify-center overflow-hidden">

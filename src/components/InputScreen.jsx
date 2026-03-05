@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import PlayerSearchInput from './PlayerSearchInput';
 import mockPlayers from '../data/mockPlayers';
+import { trackEvent } from '../utils/analytics';
 
 export default function InputScreen({ onStart }) {
   const [names, setNames] = useState(Array(10).fill(''));
@@ -12,6 +13,7 @@ export default function InputScreen({ onStart }) {
   };
 
   const fillExample = () => {
+    trackEvent('fill_example');
     setNames(mockPlayers.map((p) => `${p.name}#${p.tag}`));
   };
 
@@ -64,7 +66,7 @@ export default function InputScreen({ onStart }) {
 
       {/* Submit button */}
       <button
-        onClick={() => onStart(names)}
+        onClick={() => { trackEvent('create_team'); onStart(names); }}
         disabled={!allFilled}
         className={`w-full max-w-[720px] h-[56px] rounded font-bold text-lg transition-all
           ${allFilled

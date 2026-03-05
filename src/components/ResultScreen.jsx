@@ -3,6 +3,7 @@ import PlayerCard from './PlayerCard';
 import TeamComparison from './TeamComparison';
 import { assignTeams } from '../utils/teamAssigner';
 import { POSITIONS } from '../data/constants';
+import { trackEvent } from '../utils/analytics';
 
 export default function ResultScreen({ teamData, onReassign, onReset }) {
   const [teamA, setTeamA] = useState(teamData.teamA);
@@ -18,6 +19,7 @@ export default function ResultScreen({ teamData, onReassign, onReset }) {
   }, []);
 
   const handleReassign = () => {
+    trackEvent('reassign_team');
     const allPlayers = [...teamA, ...teamB].map((p) => {
       const currentTeam = teamA.find((a) => a.id === p.id) ? 'A' : 'B';
       const isTeamLocked = p.lockedTeam || p.lockedPosition || false;
@@ -140,7 +142,7 @@ export default function ResultScreen({ teamData, onReassign, onReset }) {
       {/* Bottom buttons */}
       <div className="flex gap-4 justify-center mb-4">
         <button
-          onClick={onReset}
+          onClick={() => { trackEvent('reset'); onReset(); }}
           className="px-10 py-3 bg-[#1E2328] border border-[rgba(200,170,110,0.2)] text-[#F0E6D2] rounded font-semibold
                      hover:bg-[rgba(200,170,110,0.08)] transition-all min-w-[180px]"
         >

@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import InputScreen from './components/InputScreen';
 import LoadingScreen from './components/LoadingScreen';
 import ResultScreen from './components/ResultScreen';
+import { trackEvent } from './utils/analytics';
 
 const SCREENS = {
   INPUT: 'input',
@@ -13,6 +14,14 @@ function App() {
   const [screen, setScreen] = useState(SCREENS.INPUT);
   const [playerNames, setPlayerNames] = useState(Array(10).fill(''));
   const [teamData, setTeamData] = useState(null);
+  const prevScreen = useRef(screen);
+
+  useEffect(() => {
+    if (prevScreen.current !== screen) {
+      trackEvent('screen_view', { screen_name: screen });
+      prevScreen.current = screen;
+    }
+  }, [screen]);
 
   const handleStartBalancing = (names) => {
     setPlayerNames(names);

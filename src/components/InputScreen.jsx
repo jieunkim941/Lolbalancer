@@ -35,16 +35,14 @@ export default function InputScreen({ onStart }) {
         {/* Card header */}
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-[24px] font-bold text-[#F0E6D2]">소환사명 입력</h2>
-          {import.meta.env.DEV && (
-            <button
-              type="button"
-              onClick={fillExample}
-              className="px-4 py-2 text-sm text-[#C8AA6E] border border-[rgba(200,170,110,0.3)] rounded
-                         hover:bg-[rgba(200,170,110,0.1)] transition-colors"
-            >
-              예시 채우기
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={fillExample}
+            className="px-4 py-2 text-sm text-[#C8AA6E] border border-[rgba(200,170,110,0.3)] rounded
+                       hover:bg-[rgba(200,170,110,0.1)] transition-colors"
+          >
+            예시 채우기
+          </button>
         </div>
 
         {/* 2-col grid */}

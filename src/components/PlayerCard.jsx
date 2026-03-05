@@ -88,12 +88,12 @@ function ChampionIcon({ championKey, ddragonVersion, size = 40 }) {
   );
 }
 
-export default function PlayerCard({ player, team, onToggleLockPosition, onToggleLockChampion }) {
+export default function PlayerCard({ player, team, onToggleLockTeam, onToggleLockPosition, onToggleLockChampion }) {
   const [expanded, setExpanded] = useState(false);
   const posColor = POSITION_COLORS[player.assignedPosition] || '#A09B8C';
   const tierShort = TIER_SHORT[player.tiers.current] || player.tiers.current.charAt(0);
   const tierColor = getTierColor(player.tiers.current);
-  const isLocked = player.lockedPosition || player.lockedChampion;
+  const isLocked = player.lockedTeam || player.lockedPosition || player.lockedChampion;
 
   return (
     <div
@@ -222,6 +222,15 @@ export default function PlayerCard({ player, team, onToggleLockPosition, onToggl
 
           {/* 고정 체크박스 */}
           <div className="flex gap-5 text-xs pt-2">
+            <label className="flex items-center gap-1.5 cursor-pointer text-[#A09B8C] hover:text-[#F0E6D2] transition-colors">
+              <input
+                type="checkbox"
+                checked={player.lockedTeam || false}
+                onChange={() => onToggleLockTeam(player.id)}
+                className="accent-[#C8AA6E]"
+              />
+              팀 고정
+            </label>
             <label className="flex items-center gap-1.5 cursor-pointer text-[#A09B8C] hover:text-[#F0E6D2] transition-colors">
               <input
                 type="checkbox"

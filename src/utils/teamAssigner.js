@@ -4,47 +4,51 @@ const MAX_DIFF = 20; // 허용 총점 차이
 const MAX_LANE_DIFF = 15; // 허용 라인별 점수 차이
 
 export function assignTeams(players) {
-  // 1. 고정된 플레이어 분리
-  const lockedA = [];
-  const lockedB = [];
-  const unlocked = [];
+  // 1. 플레이어 분류: 팀+포지션 고정 / 팀만 고정 / 자유
+  const fixedA = [];   // 팀 + 포지션 고정
+  const fixedB = [];
+  const flexA = [];    // 팀만 고정 (포지션은 유연)
+  const flexB = [];
+  const unlocked = []; // 완전 자유
 
   for (const player of players) {
-    if (player.locked) {
-      const pos = player.lockedPosition || player.positionData.main.name;
-      const assigned = { ...player, assignedPosition: pos };
-      if (player.lockedTeam === 'A') lockedA.push(assigned);
-      else lockedB.push(assigned);
+    if (player.locked && player.lockedPosition) {
+      const assigned = { ...player, assignedPosition: player.lockedPosition };
+      if (player.lockedTeam === 'A') fixedA.push(assigned);
+      else fixedB.push(assigned);
+    } else if (player.locked && player.lockedTeam) {
+      if (player.lockedTeam === 'A') flexA.push(player);
+      else flexB.push(player);
     } else {
       unlocked.push(player);
     }
   }
 
-  const neededA = 5 - lockedA.length;
-  const neededB = 5 - lockedB.length;
+  const neededA = 5 - fixedA.length - flexA.length;
+  const neededB = 5 - fixedB.length - flexB.length;
 
   // 2. 가능한 조합 생성 (unlocked에서 neededA명을 A팀으로)
-  const usedPositionsA = new Set(lockedA.map((p) => p.assignedPosition));
-  const usedPositionsB = new Set(lockedB.map((p) => p.assignedPosition));
+  const usedPositionsA = new Set(fixedA.map((p) => p.assignedPosition));
+  const usedPositionsB = new Set(fixedB.map((p) => p.assignedPosition));
 
   const candidates = [];
   const indices = unlocked.map((_, i) => i);
 
-  // 조합 탐색 (C(n, neededA) — 최대 10명 중 5명 = 252가지)
+  // 조합 탐색
   combinations(indices, neededA, (aIndices) => {
     const bIndices = indices.filter((i) => !aIndices.includes(i));
 
-    // A팀 포지션 배정
-    const aPlayers = aIndices.map((i) => unlocked[i]);
-    const bPlayers = bIndices.map((i) => unlocked[i]);
+    // 팀만 고정된 플레이어 + 자유 플레이어를 합쳐서 포지션 배정
+    const aPlayers = [...flexA, ...aIndices.map((i) => unlocked[i])];
+    const bPlayers = [...flexB, ...bIndices.map((i) => unlocked[i])];
 
     const aAssigned = assignPositions(aPlayers, usedPositionsA);
     const bAssigned = assignPositions(bPlayers, usedPositionsB);
 
     if (!aAssigned || !bAssigned) return;
 
-    const teamA = [...lockedA, ...aAssigned];
-    const teamB = [...lockedB, ...bAssigned];
+    const teamA = [...fixedA, ...aAssigned];
+    const teamB = [...fixedB, ...bAssigned];
 
     const scoreA = teamA.reduce((s, p) => s + p.finalScore, 0);
     const scoreB = teamB.reduce((s, p) => s + p.finalScore, 0);

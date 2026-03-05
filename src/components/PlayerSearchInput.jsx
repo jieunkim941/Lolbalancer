@@ -26,7 +26,7 @@ export default function PlayerSearchInput({ value, onChange, placeholder }) {
       setHistoryResults([]);
       return;
     }
-    setFriendResults(query ? searchFriends(query) : searchFriends(''));
+    setFriendResults(import.meta.env.DEV ? (query ? searchFriends(query) : searchFriends('')) : []);
     setHistoryResults(query ? searchHistory(query) : []);
   }, [query, hasTag]);
 

@@ -18,12 +18,16 @@ export default function ResultScreen({ teamData, onReassign, onReset }) {
   }, []);
 
   const handleReassign = () => {
-    const allPlayers = [...teamA, ...teamB].map((p) => ({
-      ...p,
-      locked: p.lockedPosition || false,
-      lockedTeam: teamA.find((a) => a.id === p.id) ? 'A' : 'B',
-      lockedPosition: p.lockedPosition ? p.assignedPosition : undefined,
-    }));
+    const allPlayers = [...teamA, ...teamB].map((p) => {
+      const currentTeam = teamA.find((a) => a.id === p.id) ? 'A' : 'B';
+      const isTeamLocked = p.lockedTeam || p.lockedPosition || false;
+      return {
+        ...p,
+        locked: isTeamLocked,
+        lockedTeam: isTeamLocked ? currentTeam : undefined,
+        lockedPosition: p.lockedPosition ? p.assignedPosition : undefined,
+      };
+    });
 
     const previousIds = new Set([
       ...teamA.map((p) => `A-${p.id}`),
@@ -93,6 +97,7 @@ export default function ResultScreen({ teamData, onReassign, onReset }) {
                 <PlayerCard
                   player={player}
                   team="A"
+                  onToggleLockTeam={(id) => toggleLock(setTeamA, id, 'lockedTeam')}
                   onToggleLockPosition={(id) => toggleLock(setTeamA, id, 'lockedPosition')}
                   onToggleLockChampion={(id) => toggleLock(setTeamA, id, 'lockedChampion')}
                 />
@@ -122,6 +127,7 @@ export default function ResultScreen({ teamData, onReassign, onReset }) {
                 <PlayerCard
                   player={player}
                   team="B"
+                  onToggleLockTeam={(id) => toggleLock(setTeamB, id, 'lockedTeam')}
                   onToggleLockPosition={(id) => toggleLock(setTeamB, id, 'lockedPosition')}
                   onToggleLockChampion={(id) => toggleLock(setTeamB, id, 'lockedChampion')}
                 />

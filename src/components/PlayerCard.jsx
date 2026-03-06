@@ -31,20 +31,6 @@ const POSITION_COLORS = {
   SUP: '#C084FC',
 };
 
-const TIER_SHORT = {
-  Challenger: 'C',
-  Grandmaster: 'G',
-  Master: 'M',
-  'Diamond 1': 'DI', 'Diamond 2': 'DII', 'Diamond 3': 'DIII', 'Diamond 4': 'DIV',
-  'Emerald 1': 'EI', 'Emerald 2': 'EII', 'Emerald 3': 'EIII', 'Emerald 4': 'EIV',
-  'Platinum 1': 'PI', 'Platinum 2': 'PII', 'Platinum 3': 'PIII', 'Platinum 4': 'PIV',
-  'Gold 1': 'GI', 'Gold 2': 'GII', 'Gold 3': 'GIII', 'Gold 4': 'GIV',
-  'Silver 1': 'SI', 'Silver 2': 'SII', 'Silver 3': 'SIII', 'Silver 4': 'SIV',
-  'Bronze 1': 'BI', 'Bronze 2': 'BII', 'Bronze 3': 'BIII', 'Bronze 4': 'BIV',
-  'Iron 1': 'II', 'Iron 2': 'III', 'Iron 3': 'IIII', 'Iron 4': 'IIV',
-  Unranked: 'U',
-};
-
 const TIER_COLORS = {
   Challenger: '#F4C874',
   Grandmaster: '#FF4E50',
@@ -114,7 +100,6 @@ function ChampionIcon({ championKey, ddragonVersion, size = 40 }) {
 export default function PlayerCard({ player, team, onToggleLockTeam, onToggleLockPosition, onToggleLockChampion }) {
   const [expanded, setExpanded] = useState(false);
   const posColor = POSITION_COLORS[player.assignedPosition] || '#A09B8C';
-  const tierShort = TIER_SHORT[player.tiers.current] || player.tiers.current.charAt(0);
   const tierColor = getTierColor(player.tiers.current);
   const isLocked = player.lockedTeam || player.lockedPosition || player.lockedChampion;
 
@@ -199,7 +184,7 @@ export default function PlayerCard({ player, team, onToggleLockTeam, onToggleLoc
                   <div className="flex items-center justify-center gap-1">
                     <TierEmblem tier={s.tier} size={18} />
                     <p className="text-sm font-bold" style={{ color: getTierColor(s.tier) }}>
-                      {TIER_SHORT[s.tier] || s.tier}
+                      {s.tier}
                     </p>
                   </div>
                 </div>

@@ -1,8 +1,13 @@
 // 로컬 개발: Express 서버 (localhost:3001)
 // 배포(Vercel): 같은 도메인의 /api/player
+import { getCache, setCache } from '../utils/playerCache.js';
+
 const IS_DEV = import.meta.env.DEV;
 
 export async function fetchPlayerData(nameWithTag) {
+  const cached = getCache(nameWithTag);
+  if (cached) return cached;
+
   // "닉네임#TAG" 형태를 파싱
   const [gameName, tagLine] = nameWithTag.includes('#')
     ? nameWithTag.split('#')
@@ -19,7 +24,9 @@ export async function fetchPlayerData(nameWithTag) {
     throw new Error(err.error || `소환사 "${nameWithTag}"을 찾을 수 없습니다.`);
   }
 
-  return res.json();
+  const data = await res.json();
+  setCache(nameWithTag, data);
+  return data;
 }
 
 export async function searchPlayers(gameName) {

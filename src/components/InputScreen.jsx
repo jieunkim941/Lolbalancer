@@ -17,6 +17,7 @@ export default function InputScreen({ onStart }) {
     setNames(mockPlayers.map((p) => `${p.name}#${p.tag}`));
   };
 
+  const [focusedIndex, setFocusedIndex] = useState(-1);
   const allFilled = names.every((n) => n.trim().length > 0);
   const filledCount = names.filter((n) => n.trim().length > 0).length;
 
@@ -70,15 +71,19 @@ export default function InputScreen({ onStart }) {
         {/* 2-col grid */}
         <div className="grid grid-cols-2 gap-4">
           {names.map((name, i) => (
-            <div key={i} className={`fade-in-up stagger-${Math.min(i + 1, 10)}`}>
+            <div key={i} className={`fade-in-up stagger-${Math.min(i + 1, 10)} relative`}
+              style={{ zIndex: focusedIndex === i ? 9999 : 1 }}
+            >
               <label className="block text-sm text-[#A09B8C] mb-1.5 font-medium">
                 소환사 {i + 1}
               </label>
-              <PlayerSearchInput
-                value={name}
-                onChange={(val) => updateName(i, val)}
-                placeholder="닉네임#TAG"
-              />
+              <div onFocus={() => setFocusedIndex(i)} onBlur={() => setFocusedIndex(-1)}>
+                <PlayerSearchInput
+                  value={name}
+                  onChange={(val) => updateName(i, val)}
+                  placeholder="닉네임#TAG"
+                />
+              </div>
             </div>
           ))}
         </div>
@@ -88,7 +93,7 @@ export default function InputScreen({ onStart }) {
       <button
         onClick={() => { trackEvent('create_team'); onStart(names); }}
         disabled={!allFilled}
-        className={`w-full max-w-[720px] h-[56px] rounded-xl font-bold text-lg fade-in-up stagger-6 relative z-10
+        className={`w-full max-w-[720px] h-[56px] rounded-xl font-bold text-lg fade-in-up stagger-6 relative z-[1]
           ${allFilled
             ? 'btn-gold cursor-pointer'
             : 'bg-[#1E2328] text-[#555] cursor-not-allowed border border-[rgba(200,170,110,0.1)]'
@@ -98,7 +103,7 @@ export default function InputScreen({ onStart }) {
       </button>
 
       {/* Footer notes */}
-      <div className="mt-6 text-center space-y-1 fade-in-up stagger-8 relative z-10">
+      <div className="mt-6 text-center space-y-1 fade-in-up stagger-8 relative z-[1]">
         <p className="text-xs text-[#A09B8C]/60">
           Riot Games API를 통해 실시간 데이터를 수집합니다
         </p>

@@ -125,7 +125,7 @@ export default function PlayerSearchInput({ value, onChange, placeholder }) {
   };
 
   return (
-    <div ref={wrapperRef} className="relative">
+    <div ref={wrapperRef} className="relative" style={{ zIndex: showDropdown ? 9999 : 'auto' }}>
       <input
         type="text"
         value={value}
@@ -145,8 +145,8 @@ export default function PlayerSearchInput({ value, onChange, placeholder }) {
         <div
           ref={listRef}
           className="absolute z-50 mt-1.5 w-full max-h-60 overflow-y-auto
-                     glass-card rounded-lg shadow-xl shadow-black/40"
-          style={{ zIndex: 9999 }}
+                     rounded-lg shadow-xl shadow-black/40"
+          style={{ zIndex: 9999, background: '#1E2328', border: '1px solid rgba(200,170,110,0.2)' }}
         >
           {allResults.map((player, i) => (
             <DropdownItem

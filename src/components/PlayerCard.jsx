@@ -52,7 +52,6 @@ function getTierColor(tier) {
   return '#555';
 }
 
-// 티어 문자열 → op.gg 엠블럼 이미지 키 (소문자)
 function getTierImageKey(tier) {
   const t = tier.toLowerCase();
   if (t.startsWith('challenger')) return 'challenger';
@@ -102,58 +101,86 @@ export default function PlayerCard({ player, team, onToggleLockTeam, onToggleLoc
   const posColor = POSITION_COLORS[player.assignedPosition] || '#A09B8C';
   const tierColor = getTierColor(player.tiers.current);
   const isLocked = player.lockedTeam || player.lockedPosition || player.lockedChampion;
+  const teamColor = team === 'A' ? '#4CC9FF' : '#FF4655';
+  const teamColorDim = team === 'A' ? 'rgba(76,201,255,0.06)' : 'rgba(255,70,85,0.06)';
+  const teamBorder = team === 'A' ? 'rgba(76,201,255,0.15)' : 'rgba(255,70,85,0.15)';
 
   return (
     <div
-      className={`bg-[#1E2328] rounded-[6px] overflow-hidden transition-all ${
+      className={`rounded-lg overflow-hidden transition-all duration-200 ${
         isLocked
-          ? 'border-2 border-[#C8AA6E] shadow-[0_0_12px_rgba(200,170,110,0.15)]'
-          : 'border border-[rgba(200,170,110,0.12)]'
+          ? 'border-2 border-[#C8AA6E] shadow-[0_0_16px_rgba(200,170,110,0.12)]'
+          : 'border border-[rgba(200,170,110,0.1)]'
       }`}
+      style={{
+        background: `linear-gradient(135deg, ${teamColorDim} 0%, rgba(30,35,40,0.95) 40%, rgba(26,26,46,0.9) 100%)`,
+      }}
     >
       {/* Collapsed row */}
       <button
         type="button"
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[rgba(200,170,110,0.04)] transition-colors"
+        className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-[rgba(255,255,255,0.02)] transition-colors"
       >
-        {/* Position badge */}
-        <span
-          className="text-[11px] font-bold px-2 py-0.5 rounded shrink-0 min-w-[60px] text-center"
-          style={{ backgroundColor: posColor + '18', color: posColor }}
-        >
-          {player.assignedPosition}
-        </span>
+        {/* 팀 컬러 인디케이터 */}
+        <div
+          className="w-[3px] h-8 rounded-full shrink-0"
+          style={{ backgroundColor: teamColor, opacity: 0.6 }}
+        />
 
-        {/* Name */}
-        <span className="flex-1 text-left text-[#F0E6D2] font-medium truncate">{player.name}</span>
+        {/* Position badge */}
+        <div className="flex flex-col items-center shrink-0 min-w-[44px]">
+          <PositionIcon position={player.assignedPosition} size={18} />
+          <span
+            className="text-[10px] font-bold mt-0.5"
+            style={{ color: posColor }}
+          >
+            {player.assignedPosition}
+          </span>
+        </div>
+
+        {/* Name + 승률 */}
+        <div className="flex-1 text-left min-w-0">
+          <span className="text-[15px] text-[#F0E6D2] font-semibold truncate block">{player.name}</span>
+          <span className="text-[11px] text-[#A09B8C]">
+            승률 {player.champion?.winRate ?? '-'}%
+          </span>
+        </div>
 
         {/* Lock icon */}
-        {isLocked && <span className="text-[#C8AA6E] text-xs shrink-0">🔒</span>}
+        {isLocked && (
+          <span className="text-[#C8AA6E] text-[10px] bg-[rgba(200,170,110,0.1)] px-1.5 py-0.5 rounded shrink-0">
+            🔒
+          </span>
+        )}
 
         {/* Tier badge */}
-        <span
-          className="text-[11px] font-bold px-1.5 py-0.5 rounded shrink-0 flex items-center gap-1"
-          style={{ backgroundColor: tierColor + '20', color: tierColor }}
+        <div
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md shrink-0"
+          style={{ backgroundColor: tierColor + '14', border: `1px solid ${tierColor}25` }}
         >
-          <TierEmblem tier={player.tiers.current} size={16} />
-          {player.tiers.current}
-        </span>
+          <TierEmblem tier={player.tiers.current} size={18} />
+          <span className="text-[11px] font-bold" style={{ color: tierColor }}>
+            {player.tiers.current}
+          </span>
+        </div>
 
         {/* Score */}
-        <span className="text-sm font-mono font-bold text-[#F0E6D2] shrink-0 min-w-[32px] text-right">
-          {player.finalScore}
-        </span>
+        <div className="shrink-0 min-w-[40px] text-right">
+          <span className="text-[17px] font-mono font-bold" style={{ color: teamColor }}>
+            {player.finalScore}
+          </span>
+        </div>
 
         {/* Chevron */}
         <svg
-          width="16"
-          height="16"
+          width="14"
+          height="14"
           viewBox="0 0 24 24"
           fill="none"
           stroke="#A09B8C"
-          strokeWidth="2"
-          className={`shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`}
+          strokeWidth="2.5"
+          className={`shrink-0 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}
         >
           <polyline points="6 9 12 15 18 9" />
         </svg>
@@ -161,13 +188,61 @@ export default function PlayerCard({ player, team, onToggleLockTeam, onToggleLoc
 
       {/* Expanded content */}
       {expanded && (
-        <div className="px-4 pb-4 border-t border-[rgba(200,170,110,0.1)]">
-          {/* 최근 3시즌 티어 */}
-          <div className="mt-3 mb-4">
-            <p className="text-xs text-[#A09B8C] mb-2 flex items-center gap-1">
-              최근 3시즌 티어
+        <div className="px-4 pb-4">
+          <div className="divider-glow mb-4" />
+
+          {/* 상단: 티어 + 챔피언 나란히 */}
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            {/* 좌: 추천 챔피언 */}
+            {player.champion && (
+              <div
+                className="rounded-lg p-3 border"
+                style={{ backgroundColor: 'rgba(10,10,15,0.5)', borderColor: teamBorder }}
+              >
+                <p className="text-[10px] text-[#A09B8C] mb-2 uppercase tracking-wider font-semibold">추천 챔피언</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-lg bg-[#1E2328] flex items-center justify-center overflow-hidden border border-[rgba(200,170,110,0.08)]">
+                    <ChampionIcon championKey={player.champion.championKey} ddragonVersion={player.ddragonVersion} size={44} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-[#F0E6D2]">{player.champion.name}</p>
+                    <p className="text-[11px] text-[#A09B8C]">
+                      {player.champion.games}게임 · <span style={{ color: player.champion.winRate >= 50 ? '#00C853' : '#FF4655' }}>{player.champion.winRate}%</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 우: 추천 포지션 */}
+            <div
+              className="rounded-lg p-3 border"
+              style={{ backgroundColor: 'rgba(10,10,15,0.5)', borderColor: teamBorder }}
+            >
+              <p className="text-[10px] text-[#A09B8C] mb-2 uppercase tracking-wider font-semibold">추천 포지션</p>
+              <div className="flex items-center gap-2.5 mt-1">
+                <div
+                  className="w-11 h-11 rounded-lg flex items-center justify-center"
+                  style={{ backgroundColor: posColor + '15', border: `1px solid ${posColor}30` }}
+                >
+                  <PositionIcon position={player.positionData.main.name} size={22} />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-[#F0E6D2]">{player.positionData.main.name}</p>
+                  {player.positionData.sub && (
+                    <p className="text-[11px] text-[#A09B8C]">부: {player.positionData.sub.name}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 3시즌 티어 */}
+          <div className="mb-4">
+            <p className="text-[10px] text-[#A09B8C] mb-2 uppercase tracking-wider font-semibold flex items-center gap-1">
+              시즌 티어 추이
               {player.tiers.rankType === 'flex' && (
-                <span className="ml-1 text-[9px] bg-[#C8AA6E20] text-[#C8AA6E] px-1.5 py-0.5 rounded">자유랭크</span>
+                <span className="text-[9px] bg-[#C8AA6E20] text-[#C8AA6E] px-1.5 py-0.5 rounded normal-case">자유랭크</span>
               )}
             </p>
             <div className="grid grid-cols-3 gap-2">
@@ -178,12 +253,13 @@ export default function PlayerCard({ player, team, onToggleLockTeam, onToggleLoc
               ].map((s, i) => (
                 <div
                   key={i}
-                  className="bg-[#0A0A0F] rounded px-3 py-2 text-center border border-[rgba(200,170,110,0.1)]"
+                  className="rounded-lg px-3 py-2.5 text-center border"
+                  style={{ backgroundColor: 'rgba(10,10,15,0.5)', borderColor: 'rgba(200,170,110,0.06)' }}
                 >
-                  <p className="text-[10px] text-[#A09B8C] mb-0.5">{s.label}</p>
+                  <p className="text-[10px] text-[#A09B8C] mb-1">{s.label}</p>
                   <div className="flex items-center justify-center gap-1">
-                    <TierEmblem tier={s.tier} size={18} />
-                    <p className="text-sm font-bold" style={{ color: getTierColor(s.tier) }}>
+                    <TierEmblem tier={s.tier} size={20} />
+                    <p className="text-[13px] font-bold" style={{ color: getTierColor(s.tier) }}>
                       {s.tier}
                     </p>
                   </div>
@@ -192,42 +268,11 @@ export default function PlayerCard({ player, team, onToggleLockTeam, onToggleLoc
             </div>
           </div>
 
-          {/* 추천 포지션 */}
-          <div className="mb-4">
-            <p className="text-xs text-[#A09B8C] mb-1.5 flex items-center gap-1">
-              추천 포지션
-            </p>
-            <div className="flex items-center gap-2 text-sm">
-              <PositionIcon position={player.positionData.main.name} />
-              <span className="font-semibold text-[#F0E6D2]">{player.positionData.main.name}</span>
-              {player.positionData.sub && (
-                <span className="text-[#A09B8C] text-xs">(부: {player.positionData.sub.name})</span>
-              )}
-            </div>
-          </div>
-
-          {/* 추천 챔피언 */}
-          {player.champion && (
-            <div className="mb-4">
-              <p className="text-xs text-[#A09B8C] mb-1.5 flex items-center gap-1">
-                추천 챔피언
-              </p>
-              <div className="flex items-center gap-3 bg-[#0A0A0F] rounded p-2.5 border border-[rgba(200,170,110,0.1)]">
-                <div className="w-10 h-10 rounded bg-[#1E2328] flex items-center justify-center overflow-hidden">
-                  <ChampionIcon championKey={player.champion.championKey} ddragonVersion={player.ddragonVersion} size={40} />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-[#F0E6D2]">{player.champion.name}</p>
-                  <p className="text-xs text-[#A09B8C]">
-                    {player.champion.games}게임 · 승률 {player.champion.winRate}%
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* 고정 체크박스 */}
-          <div className="flex gap-5 text-xs pt-2">
+          <div
+            className="flex gap-4 text-xs pt-2 px-3 py-2.5 rounded-lg border"
+            style={{ backgroundColor: 'rgba(10,10,15,0.3)', borderColor: 'rgba(200,170,110,0.06)' }}
+          >
             <label className="flex items-center gap-1.5 cursor-pointer text-[#A09B8C] hover:text-[#F0E6D2] transition-colors">
               <input
                 type="checkbox"

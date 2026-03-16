@@ -136,17 +136,17 @@ export default function PlayerSearchInput({ value, onChange, placeholder }) {
         onFocus={() => !hasTag && setOpen(true)}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
-        className="w-full h-[52px] px-4 bg-[#0A0A0F] border-2 border-[rgba(200,170,110,0.2)] rounded
+        className="w-full h-[52px] px-4 input-glow rounded-lg
                    text-[#F0E6D2] placeholder-[#A09B8C]/40
-                   focus:outline-none focus:border-[#C8AA6E] focus:ring-1 focus:ring-[#C8AA6E]/30
-                   transition-colors"
+                   focus:outline-none transition-all"
       />
 
       {showDropdown && (
         <div
           ref={listRef}
-          className="absolute z-50 mt-1 w-full max-h-60 overflow-y-auto
-                     bg-[#1E2328] border border-[rgba(200,170,110,0.2)] rounded shadow-lg shadow-black/50"
+          className="absolute z-50 mt-1.5 w-full max-h-60 overflow-y-auto
+                     glass-card rounded-lg shadow-xl shadow-black/40"
+          style={{ zIndex: 9999 }}
         >
           {allResults.map((player, i) => (
             <DropdownItem
@@ -175,13 +175,13 @@ function DropdownItem({ player, active, onClick, onMouseEnter }) {
       type="button"
       onClick={onClick}
       onMouseEnter={onMouseEnter}
-      className={`w-full flex items-center gap-3 px-3 py-2 transition-colors text-left
-        ${active ? 'bg-[rgba(200,170,110,0.12)]' : 'hover:bg-[rgba(200,170,110,0.08)]'}`}
+      className={`w-full flex items-center gap-3 px-3 py-2.5 transition-colors text-left
+        ${active ? 'bg-[rgba(200,170,110,0.12)]' : 'hover:bg-[rgba(200,170,110,0.06)]'}`}
     >
       <img
         src={`${PROFILE_ICON_URL}/${player.profileIconId || 29}.png`}
         alt=""
-        className="w-8 h-8 rounded-full border border-[rgba(200,170,110,0.2)]"
+        className="w-8 h-8 rounded-full border border-[rgba(200,170,110,0.15)]"
         onError={(e) => { e.target.src = `${PROFILE_ICON_URL}/29.png`; }}
       />
       <div className="flex-1 min-w-0">

@@ -57,42 +57,50 @@ export default function ResultScreen({ teamData, onReassign, onReset }) {
     );
 
   return (
-    <div className="min-h-screen px-8 py-8 max-w-[1280px] mx-auto">
+    <div className="min-h-screen px-8 py-8 max-w-[1280px] mx-auto relative">
+      {/* 앰비언트 배경 */}
+      <div className="ambient-bg" />
+
       {/* Header */}
-      <div className="text-center mb-8">
-        <h1 className="text-[32px] font-bold mb-2">
-          <span className="text-[#C8AA6E]">⚔ 자동 라인 배정 + 밸런스 결과</span>
+      <div className="text-center mb-8 fade-in-up relative z-10">
+        <div className="inline-flex items-center gap-3 mb-3">
+          <div className="w-10 h-[2px] bg-gradient-to-r from-transparent to-[#C8AA6E]" />
+          <span className="text-[#C8AA6E] text-xl">⚔</span>
+          <div className="w-10 h-[2px] bg-gradient-to-l from-transparent to-[#C8AA6E]" />
+        </div>
+        <h1 className="text-[30px] font-bold mb-2 text-glow-gold">
+          <span className="text-[#C8AA6E]">자동 라인 배정 + 밸런스 결과</span>
         </h1>
         <p className="text-[#A09B8C] text-sm mb-1">
           각 플레이어의 주 포지션과 승률을 고려한 최적의 팀 배정
         </p>
-        <p className="text-[#C8AA6E] text-sm">
+        <p className="text-[#C8AA6E]/70 text-sm">
           챔피언을 선택하거나 포지션을 고정한 후 재배정을 눌러보세요
         </p>
       </div>
 
       {/* Score comparison */}
-      <div className="mb-8">
+      <div className="mb-8 fade-in-up stagger-1 relative z-10">
         <TeamComparison teamA={teamA} teamB={teamB} />
       </div>
 
       {/* Two team columns */}
-      <div className="grid grid-cols-2 gap-6 mb-10">
+      <div className="grid grid-cols-2 gap-6 mb-10 relative z-10">
         {/* Team A */}
-        <div>
-          <div className="border-l-4 border-[#4CC9FF] bg-[#1E2328] rounded-[10px] px-6 py-4 mb-4">
-            <h2 className="text-xl font-bold text-[#4CC9FF] text-center">팀 A</h2>
+        <div className="fade-in-up stagger-2">
+          <div className="team-header-blue rounded-xl px-6 py-4 mb-4">
+            <h2 className="text-xl font-bold text-[#4CC9FF] text-center text-glow-blue">팀 A</h2>
             <p className="text-sm text-[#A09B8C] text-center">
               총점: {Math.round(teamA.reduce((s, p) => s + p.finalScore, 0))}
             </p>
           </div>
           <div className="space-y-2">
-            {sortByPosition(teamA).map((player) => (
+            {sortByPosition(teamA).map((player, idx) => (
               <div
                 key={player.id}
-                className={`transition-all duration-500 ${
+                className={`transition-all duration-500 fade-in-up stagger-${idx + 3} ${
                   highlightedIds.has(player.id)
-                    ? 'ring-2 ring-[#4CC9FF] shadow-[0_0_20px_rgba(76,201,255,0.3)] rounded-[6px]'
+                    ? 'ring-2 ring-[#4CC9FF] shadow-[0_0_24px_rgba(76,201,255,0.25)] rounded-lg'
                     : ''
                 }`}
               >
@@ -109,20 +117,20 @@ export default function ResultScreen({ teamData, onReassign, onReset }) {
         </div>
 
         {/* Team B */}
-        <div>
-          <div className="border-l-4 border-[#FF4655] bg-[#1E2328] rounded-[10px] px-6 py-4 mb-4">
-            <h2 className="text-xl font-bold text-[#FF4655] text-center">팀 B</h2>
+        <div className="fade-in-up stagger-3">
+          <div className="team-header-red rounded-xl px-6 py-4 mb-4">
+            <h2 className="text-xl font-bold text-[#FF4655] text-center text-glow-red">팀 B</h2>
             <p className="text-sm text-[#A09B8C] text-center">
               총점: {Math.round(teamB.reduce((s, p) => s + p.finalScore, 0))}
             </p>
           </div>
           <div className="space-y-2">
-            {sortByPosition(teamB).map((player) => (
+            {sortByPosition(teamB).map((player, idx) => (
               <div
                 key={player.id}
-                className={`transition-all duration-500 ${
+                className={`transition-all duration-500 fade-in-up stagger-${idx + 3} ${
                   highlightedIds.has(player.id)
-                    ? 'ring-2 ring-[#FF4655] shadow-[0_0_20px_rgba(255,70,85,0.3)] rounded-[6px]'
+                    ? 'ring-2 ring-[#FF4655] shadow-[0_0_24px_rgba(255,70,85,0.25)] rounded-lg'
                     : ''
                 }`}
               >
@@ -140,18 +148,16 @@ export default function ResultScreen({ teamData, onReassign, onReset }) {
       </div>
 
       {/* Bottom buttons */}
-      <div className="flex gap-4 justify-center mb-4">
+      <div className="flex gap-4 justify-center mb-4 fade-in-up stagger-8 relative z-10">
         <button
           onClick={() => { trackEvent('reset'); onReset(); }}
-          className="px-10 py-3 bg-[#1E2328] border border-[rgba(200,170,110,0.2)] text-[#F0E6D2] rounded font-semibold
-                     hover:bg-[rgba(200,170,110,0.08)] transition-all min-w-[180px]"
+          className="btn-ghost px-10 py-3 text-[#F0E6D2] rounded-xl font-semibold min-w-[180px]"
         >
           처음으로
         </button>
         <button
           onClick={handleReassign}
-          className="px-10 py-3 bg-gradient-to-r from-[#C8AA6E] to-[#A0884A] text-[#0A0A0F] rounded font-semibold
-                     hover:shadow-[0_4px_20px_rgba(200,170,110,0.3)] transition-all min-w-[200px] flex items-center justify-center gap-2"
+          className="btn-gold px-10 py-3 rounded-xl font-semibold min-w-[200px] flex items-center justify-center gap-2"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <polyline points="23 4 23 10 17 10" />

@@ -1,12 +1,192 @@
 @import "tailwindcss";
 
 body {
-  background: linear-gradient(147deg, #0A0A0F 0%, #0F1419 100%);
+  background: linear-gradient(147deg, #0A0A0F 0%, #0F1419 50%, #0A0E14 100%);
   color: #F0E6D2;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
-/* 스크롤바 커스텀 - 골드 테마 */
+/* ─── 앰비언트 배경 글로우 ─── */
+.ambient-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+.ambient-bg::before {
+  content: '';
+  position: absolute;
+  top: -30%;
+  left: -10%;
+  width: 60%;
+  height: 60%;
+  background: radial-gradient(circle, rgba(200,170,110,0.06) 0%, transparent 70%);
+  animation: ambientDrift 12s ease-in-out infinite;
+}
+.ambient-bg::after {
+  content: '';
+  position: absolute;
+  bottom: -20%;
+  right: -10%;
+  width: 50%;
+  height: 50%;
+  background: radial-gradient(circle, rgba(76,201,255,0.04) 0%, transparent 70%);
+  animation: ambientDrift 15s ease-in-out infinite reverse;
+}
+
+@keyframes ambientDrift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(5%, 3%) scale(1.05); }
+  66% { transform: translate(-3%, -2%) scale(0.95); }
+}
+
+/* ─── 글래스 카드 ─── */
+.glass-card {
+  background: linear-gradient(135deg, rgba(30,35,40,0.9) 0%, rgba(26,26,46,0.85) 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(200,170,110,0.15);
+  box-shadow:
+    0 4px 24px rgba(0,0,0,0.4),
+    inset 0 1px 0 rgba(200,170,110,0.08);
+}
+
+.glass-card-hover {
+  transition: transform 0.2s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+.glass-card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 8px 32px rgba(0,0,0,0.5),
+    0 0 20px rgba(200,170,110,0.08),
+    inset 0 1px 0 rgba(200,170,110,0.12);
+  border-color: rgba(200,170,110,0.25);
+}
+
+/* ─── 글로우 텍스트 ─── */
+.text-glow-gold {
+  text-shadow: 0 0 20px rgba(200,170,110,0.4), 0 0 40px rgba(200,170,110,0.15);
+}
+.text-glow-blue {
+  text-shadow: 0 0 20px rgba(76,201,255,0.5), 0 0 40px rgba(76,201,255,0.2);
+}
+.text-glow-red {
+  text-shadow: 0 0 20px rgba(255,70,85,0.5), 0 0 40px rgba(255,70,85,0.2);
+}
+
+/* ─── 버튼 글로우 ─── */
+.btn-gold {
+  background: linear-gradient(135deg, #C8AA6E 0%, #A0884A 100%);
+  color: #0A0A0F;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.15s ease, box-shadow 0.3s ease;
+}
+.btn-gold::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 50%);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.btn-gold:hover::before {
+  opacity: 1;
+}
+.btn-gold:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 4px 20px rgba(200,170,110,0.35),
+    0 0 40px rgba(200,170,110,0.15);
+}
+.btn-gold:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.btn-ghost {
+  background: rgba(30,35,40,0.8);
+  border: 1px solid rgba(200,170,110,0.2);
+  transition: all 0.2s ease;
+}
+.btn-ghost:hover {
+  background: rgba(200,170,110,0.08);
+  border-color: rgba(200,170,110,0.35);
+  box-shadow: 0 0 16px rgba(200,170,110,0.08);
+}
+
+/* ─── 인풋 글로우 ─── */
+.input-glow {
+  background: rgba(10,10,15,0.8);
+  border: 1.5px solid rgba(200,170,110,0.15);
+  transition: all 0.25s ease;
+}
+.input-glow:focus {
+  border-color: #C8AA6E;
+  box-shadow:
+    0 0 0 3px rgba(200,170,110,0.1),
+    0 0 16px rgba(200,170,110,0.12);
+}
+
+/* ─── 프로그레스 바 ─── */
+.progress-bar-bg {
+  background: rgba(200,170,110,0.1);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  background: linear-gradient(90deg, #C8AA6E 0%, #E8D5A3 50%, #C8AA6E 100%);
+  background-size: 200% 100%;
+  border-radius: 999px;
+  transition: width 0.5s ease;
+  animation: progressShimmer 2s ease-in-out infinite;
+}
+@keyframes progressShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ─── 팀 바 ─── */
+.team-bar {
+  height: 6px;
+  border-radius: 3px;
+  transition: width 0.6s ease;
+}
+
+/* ─── 엔트리 애니메이션 ─── */
+.fade-in-up {
+  animation: fadeInUp 0.5s ease forwards;
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.stagger-1 { animation-delay: 0.05s; }
+.stagger-2 { animation-delay: 0.1s; }
+.stagger-3 { animation-delay: 0.15s; }
+.stagger-4 { animation-delay: 0.2s; }
+.stagger-5 { animation-delay: 0.25s; }
+.stagger-6 { animation-delay: 0.3s; }
+.stagger-7 { animation-delay: 0.35s; }
+.stagger-8 { animation-delay: 0.4s; }
+.stagger-9 { animation-delay: 0.45s; }
+.stagger-10 { animation-delay: 0.5s; }
+
+/* ─── 팀 헤더 ─── */
+.team-header-blue {
+  background: linear-gradient(135deg, rgba(76,201,255,0.12) 0%, rgba(30,35,40,0.9) 100%);
+  border-left: 4px solid #4CC9FF;
+  box-shadow: inset 0 0 30px rgba(76,201,255,0.05);
+}
+.team-header-red {
+  background: linear-gradient(135deg, rgba(255,70,85,0.12) 0%, rgba(30,35,40,0.9) 100%);
+  border-left: 4px solid #FF4655;
+  box-shadow: inset 0 0 30px rgba(255,70,85,0.05);
+}
+
+/* ─── 스크롤바 커스텀 ─── */
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -37,4 +217,25 @@ input[type="checkbox"] {
 @keyframes dotBounce {
   0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
   40% { transform: scale(1); opacity: 1; }
+}
+
+/* ─── 디바이더 글로우 ─── */
+.divider-glow {
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(200,170,110,0.3) 50%, transparent 100%);
+}
+
+/* ─── 밸런스 뱃지 펄스 ─── */
+.badge-pulse {
+  animation: badgePulse 2s ease-in-out infinite;
+}
+@keyframes badgePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(200,170,110,0); }
+  50% { box-shadow: 0 0 12px 2px rgba(200,170,110,0.15); }
+}
+
+/* ─── VS 엘리먼트 ─── */
+.vs-badge {
+  background: linear-gradient(135deg, #C8AA6E 0%, #A0884A 100%);
+  box-shadow: 0 0 20px rgba(200,170,110,0.3);
 }

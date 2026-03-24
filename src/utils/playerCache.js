@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'player_cache:';
-const TTL_MS = 30 * 60 * 1000; // 30분
+const TTL_MS = 60 * 60 * 1000; // 1시간
 
 function normalizeKey(nameWithTag) {
   return CACHE_PREFIX + nameWithTag.toLowerCase().trim();

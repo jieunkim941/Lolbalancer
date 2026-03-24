@@ -5,6 +5,29 @@ const ASIA_BASE = 'https://asia.api.riotgames.com';
 const KR_BASE = 'https://kr.api.riotgames.com';
 const DDRAGON_VERSION = '16.5.1';
 
+// 인메모리 캐시 (Vercel warm lambda 간 유지)
+const cache = new Map();
+const CACHE_TTL = 60 * 60 * 1000; // 1시간
+
+function getCached(key) {
+  const entry = cache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.ts > CACHE_TTL) {
+    cache.delete(key);
+    return null;
+  }
+  return entry.data;
+}
+
+function setCache(key, data) {
+  // 메모리 관리: 캐시 항목이 200개 넘으면 오래된 것부터 정리
+  if (cache.size > 200) {
+    const oldest = [...cache.entries()].sort((a, b) => a[1].ts - b[1].ts);
+    for (let i = 0; i < 50; i++) cache.delete(oldest[i][0]);
+  }
+  cache.set(key, { data, ts: Date.now() });
+}
+
 // 챔피언 ID → 영문키 매핑 (serverless에서 매 요청 시 로드)
 let championIdToKey = null;
 async function getChampionMap() {
@@ -157,6 +180,13 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'gameName and tagLine are required' });
   }
 
+  // 캐시 확인
+  const cacheKey = `player:${gameName.toLowerCase()}:${tagLine.toLowerCase()}`;
+  const cached = getCached(cacheKey);
+  if (cached) {
+    return res.json(cached);
+  }
+
   try {
     // 1) 계정 조회
     const { data: account } = await riot(ASIA_BASE).get(
@@ -218,7 +248,7 @@ export default async function handler(req, res) {
     const topMastery = masteries[0];
     const champMap = await getChampionMap();
 
-    res.json({
+    const result = {
       gameName: account.gameName,
       tagLine: account.tagLine,
       puuid: account.puuid,
@@ -243,7 +273,10 @@ export default async function handler(req, res) {
       })),
       ddragonVersion: DDRAGON_VERSION,
       seasonTiers,
-    });
+    };
+
+    setCache(cacheKey, result);
+    res.json(result);
   } catch (e) {
     console.error('Player API error:', e.response?.status, e.response?.data, e.message);
     const status = e.response?.status || 500;
